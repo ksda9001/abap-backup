@@ -1,0 +1,282 @@
+FORM FRM_INIT_DATA.
+    R_ANLKL-SIGN = 'I'.
+    R_ANLKL-OPTION = 'BT'.
+    R_ANLKL-LOW = 'Z103'.
+    R_ANLKL-HIGH = 'Z106'.
+    APPEND R_ANLKL.
+    R_ANLKL-SIGN = 'I'.
+    R_ANLKL-OPTION = 'EQ'.
+    R_ANLKL-LOW = 'Z201'.
+    APPEND R_ANLKL.
+
+    R_PERAF-SIGN = 'I'.
+    R_PERAF-OPTION = 'BT'.
+    CASE S_SEASON.
+        WHEN '1'.
+            R_PERAF-LOW = 1.
+            R_PERAF-HIGH = 3.
+        WHEN '2'.
+            R_PERAF-LOW = 4.
+            R_PERAF-HIGH = 6.
+        WHEN '3'.
+            R_PERAF-LOW = 7.
+            R_PERAF-HIGH = 9.
+        WHEN '4'.
+            R_PERAF-LOW = 10.
+            R_PERAF-HIGH = 12.
+    ENDCASE.
+    APPEND R_PERAF.
+ENDFORM.
+
+FORM FRM_GET_DATA.
+SELECT ANLB~BUKRS,
+        ANLB~ANLN1,
+        ANLB~AFABE,
+        ANLB~AFASL,
+        ANLB~NDJAR,
+        ANLB~NDURJ,
+        ANLA~TXT50,
+        ANLA~ANLKL,
+        ANLC~KANSW,
+        ANLC~ANSWL,
+        ANLP~GJAHR,
+        ANLP~PERAF,
+        ANLP~KOSTL,
+        ANLP~NAFAZ,
+        ANLP~SAFAG,
+        ANLP~AAFAG
+INTO CORRESPONDING FIELDS OF TABLE @ITAB
+FROM ANLP
+INNER JOIN ANLB ON ANLB~BUKRS = ANLP~BUKRS AND ANLB~ANLN1 = ANLP~ANLN1
+INNER JOIN ANLC ON ANLC~BUKRS = ANLP~BUKRS AND ANLC~ANLN1 = ANLP~ANLN1
+        AND ANLC~GJAHR = ANLP~GJAHR AND ANLC~AFABE = ANLB~AFABE
+INNER JOIN ANLA ON ANLA~BUKRS = ANLP~BUKRS AND ANLA~ANLN1 = ANLP~ANLN1
+WHERE ANLKL IN @R_ANLKL
+    AND BDATU = '99991231'
+    AND NDURJ <> 0
+    AND NDJAR <> 0
+    AND ANLB~AFABE <> 40
+    AND ANLP~BUKRS IN @S_BUKRS
+    AND ANLP~GJAHR = @P_GJAHR
+    AND ANLP~PERAF IN @R_PERAF
+    AND ANLP~KOSTL IN @S_KOSTL.
+
+IF ITAB[] IS NOT INITIAL.
+    SELECT *
+    FROM CSKT
+    INTO TABLE @DATA(LT_CSKT)
+    FOR ALL ENTRIES IN @ITAB
+    WHERE KTOPL IN @S_BUKRS
+    AND KTOGR = @ITAB-ANLKL
+    AND AFABE = @ITAB-AFABE.
+ENDIF.
+
+LOOP AT ITAB.
+    READ TABLE LT_CSKT INTO DATA(LS_CSKT) WITH KEY KOSTL = ITAB-KOSTL.
+    IF SY-SUBRC = 0.
+        ITAB-KTEXT = LS_CSKT-KTEXT.
+    ENDIF.
+
+    READ TABLE LT_095B INTO DATA(LS_095B) WITH KEY KTOPL = ITAB-BUKRS KTOGR = ITAB-ANLKL AFABE = ITAB-AFABE.
+    IF SY-SUBRC = 0.
+        ITAB-HKONT = LS_095B-HKONT.
+    ENDIF.
+    ITAB-NAFAZ = -1 * ITAB-NAFAZ.
+    ITAB-SAFAG = -1 * ITAB-SAFAG.
+    ITAB-AAFAG = -1 * ITAB-AAFAG.
+    ITAB-DYZJJE = ITAB-NAFAZ + ITAB-SAFAG + ITAB-AAFAG.
+    ITAB-ANLC = ITAB-KANSW + ITAB-ANSWL.
+
+    IF ITAB-NDURJ <> 0.
+        ITAB-YSSJDYZJJE = ITAB-ANLC / ITAB-NDURJ / 12.
+    ENDIF.
+    ITAB-CHAZHI = ITAB-DYZJJE - ITAB-YSSJDYZJJE.
+    MODIFY ITAB.
+
+    IF S_ANLKL IS NOT INITIAL.
+        DELETE ITAB WHERE ANLKL NOT IN S_ANLKL.
+    ENDIF.
+
+    CLEAR ITAB.
+ENDLOOP.
+
+SELECT * FROM SKAT
+INTO TABLE @DATA(LT_SKAT)
+FOR ALL ENTRIES IN @ITAB
+WHERE KTOPL = @ITAB-BUKRS
+AND SAKNR = @ITAB-HKONT.
+
+LOOP AT ITAB.
+    READ TABLE LT_SKAT INTO DATA(LS_SKAT) WITH KEY SAKNR = ITAB-HKONT KTOPL = ITAB-BUKRS.
+    IF SY-SUBRC = 0.
+        ITAB-TXT50II = LS_SKAT-TXT50.
+    ENDIF.
+
+    MODIFY ITAB.
+    CLEAR ITAB.
+ENDLOOP.
+
+ENDFORM.
+
+FORM USER_COMMAND_ALV USING R_UCOMM LIKE SY-UCOMM
+    RS_SELFIELD TYPE SLIS_SELFIELD.
+
+    DATA LR_GRID TYPE REF TO CL_GUI_ALV_GRID.
+    CALL FUNCTION 'GET_GLOBALS_FROM_SLVC_FULLSCR'
+    IMPORTING
+    E_GRID = LR_GRID.
+    CALL METHOD LR_GRID->CHECK_CHANGED_DATA.
+
+    CASE R_UCOMM.
+        WHEN '&SUMMARY1'.
+        LT_FIELDCAT-NO_OUT = ''.
+        LOOP AT LT_FIELDCAT.
+            IF LT_FIELDCAT-FIELDNAME = 'PERAF'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'KOSTL'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'KTEXT'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'ANLN1'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'TXT50'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'ANLKL'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'AFASL'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'NDJAR'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'NDURJ'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'ANLC'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+
+            IF LT_FIELDCAT-FIELDNAME = 'DYZJJE'.
+                LT_FIELDCAT-SELTEXT_L = '当季折旧金额'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'YSSJDYZJJE'.
+                LT_FIELDCAT-SELTEXT_L = '原始数据当季折旧金额'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'CHAZHI'.
+                LT_FIELDCAT-SELTEXT_L = '当季折旧金额-原始数据当季折旧金额'.
+            ENDIF.
+        ENDLOOP.
+
+        CLEAR ITAB1[].
+        SORT ITAB BY PERAF.
+        LOOP AT ITAB.
+            ANLC_TEMP = ITAB-ANLC.
+            ITAB-PERAF = ''.
+            ITAB-KOSTL = ''.
+            ITAB-KTEXT = ''.
+            ITAB-ANLC = ''.
+            COLLECT ITAB INTO ITAB1.
+            CLEAR ITAB.
+        ENDLOOP.
+
+        LOOP AT ITAB1.
+            ITAB1-ANLC = ANLC_TEMP.
+            MODIFY ITAB1.
+        ENDLOOP.
+
+        CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+        EXPORTING
+        I_CALLBACK_PROGRAM = SY-REPID
+        IT_FIELDCAT = LT_FIELDCAT[]
+        IS_LAYOUT = LS_LAYOUT
+        I_CALLBACK_PF_STATUS_SET = 'DEFAULT_STATUS_ALV'
+        TABLES
+        T_OUTTAB = ITAB1
+        EXCEPTIONS
+        PROGRAM_ERROR = 1
+        OTHERS = 2.
+
+        CLEAR ITAB1[].
+
+        WHEN '&SUMMARY2'.
+        LT_FIELDCAT-NO_OUT = ''.
+        LOOP AT LT_FIELDCAT.
+            IF LT_FIELDCAT-FIELDNAME = 'PERAF'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'KOSTL'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'KTEXT'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'ANLN1'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'TXT50'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'ANLKL'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'AFASL'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'NDJAR'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'NDURJ'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'ANLC'.
+                LT_FIELDCAT-NO_OUT = 'X'.
+            ENDIF.
+
+            IF LT_FIELDCAT-FIELDNAME = 'DYZJJE'.
+                LT_FIELDCAT-SELTEXT_L = '当季折旧金额'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'YSSJDYZJJE'.
+                LT_FIELDCAT-SELTEXT_L = '原始数据当季折旧金额'.
+            ENDIF.
+            IF LT_FIELDCAT-FIELDNAME = 'CHAZHI'.
+                LT_FIELDCAT-SELTEXT_L = '当季折旧金额-原始数据当季折旧金额'.
+            ENDIF.
+        ENDLOOP.
+
+        CLEAR ITAB1[].
+        SORT ITAB BY PERAF.
+        LOOP AT ITAB.
+            ANLC_TEMP = ITAB-ANLC.
+            ITAB-PERAF = ''.
+            ITAB-ANLC = ''.
+            COLLECT ITAB INTO ITAB1.
+            CLEAR ITAB.
+        ENDLOOP.
+
+        LOOP AT ITAB1.
+            ITAB1-ANLC = ANLC_TEMP.
+            MODIFY ITAB1.
+        ENDLOOP.
+
+        CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+        EXPORTING
+        I_CALLBACK_PROGRAM = SY-REPID
+        IT_FIELDCAT = LT_FIELDCAT[]
+        IS_LAYOUT = LS_LAYOUT
+        I_CALLBACK_PF_STATUS_SET = 'DEFAULT_STATUS_ALV'
+        TABLES
+        T_OUTTAB = ITAB1
+        EXCEPTIONS
+        PROGRAM_ERROR = 1
+        OTHERS = 2.
+
+        CLEAR ITAB1[].
+    ENDCASE.
+    RS_SELFIELD-REFRESH = 'X'.
+ENDFORM.
