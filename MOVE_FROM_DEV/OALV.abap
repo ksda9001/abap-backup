@@ -1,0 +1,106 @@
+****** IMPLAMENT OF OBJECT ALV ******
+*** 30082023 ***
+
+REPORT OALV.
+CLASS LCL_REPORT DEFINITION.
+    PUBLIC SECTION.
+    TYPES: BEGIN OF TY_VBAK,
+    VBELN TYPE VBAK-VBELN,
+    ERDAT TYPE ERDAT,
+    AUART TYPE AUART,
+    AUART TYPE AUART,
+    KUNNR TYPE KUNNR,
+    END OF TY_VBAK.
+
+    DATA: T_VBAK TYPE STANDARD TABLE OF TY_VBAK.
+
+    DATA: O_ALV TYPE REF TO CL_SALV_TABLE.
+
+    METHODS:
+    "抽取数据
+    get_data,
+    "生成输出内容
+    generate_output.
+
+    "设置SALV的不同特性
+    PRIVATE SECTION.
+    METHODS:
+    SET_PF_STATUS CHANGING CO_ALV TYPE REF TO CL_SALV_TABLE.
+
+    METHODS:
+    SET_COLUMNS CHANGING CO_ALV TYPE REF TO CL_SALV_TABLE.
+ENDCLASS.
+
+CLASS LCL_REPORT IMPLEMENTATION.
+METHOD get_data.
+    SELECT VBELN
+    ERDAT
+    AUART
+    KUNNR
+    INTO TABLE T_VBAK
+    FROM VBAK
+    UP TO 20 ROWS.
+ENDMETHOD.
+
+METHOD generate_output.
+    DATA: LX_MSG TYPE REF TO CX_SALV_MSG.
+    TRY.
+        CL_SALV_TABLE=>FACTORY(
+            IMPORTING
+            R_SALV_TABLE = O_ALV
+            CHANGING
+            T_TABLE = T_VBAK
+        ).
+        CATCH CX_SALV_MSG INTO LX_MSG.
+    ENDTRY.
+    
+    "调用status设置方法
+    CALL METHOD SET_PF_STATUS
+    CHANGING
+    CO_ALV = O_ALV.
+
+    "调用设置列的方法
+    CALL METHOD me->SET_COLUMNS
+    CHANGING
+    CO_ALV = O_ALV.
+
+    "调用DISPLAY方法将数据输出
+    O_ALV->DISPLAY().
+ENDMETHOD.
+
+METHOD SET_PF_STATUS.
+    DATA: lo_functions TYPE REF to CL_SALV_FUNCTIONS_LIST.
+    
+    lo_functions = CO_ALV->GET_FUNCTIONS().
+    lo_functions->SET_DEFAULT( ABAP_TRUE ).
+ENDMETHOD.
+
+METHOD SET_COLUMNS.
+    DATA: LO_COLS TYPE REF TO CL_SALV_COLUMNS.
+    DATA: LO_COLUMN TYPE REF TO CL_SALV_COLUMN.
+
+    "取全部列的对象
+    lo_cols = O_ALV->get_columns().
+
+    "设置自动宽度
+    lo_cols->set_optimize('X').
+
+    "修改KUNNR的标签名字和输出长度
+    TRY.
+        LO_COLUMN = LO_COLS->get_column('KUNNR').
+        LO_COLUMN->SET_LONG_TEXT('Sold-To Party').
+        LO_COLUMN->SET_MEDIUM_TEXT('Sold-To Party').
+        LO_COLUMN->SET_OUTPUT_LENGTH( 15 ).
+        "隐藏列
+        LO_COLUMN-SET_VISIBLE( VALUE = IF_SALV_C_BOOL_SAP=>FALSE ).
+        CATCH cx_salv_not_found.
+
+    ENDTRY.
+ENDMETHOD.
+ENDCLASS.
+
+START-OF-SELECTION.
+DATA: LO_REPORT TYPE REF TO LCL_REPORT.
+CREATE OBJECT LO_REPORT.
+LO_REPORT->get_data().
+LO_REPORT->generate_output(). 

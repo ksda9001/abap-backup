@@ -1,0 +1,40 @@
+****** FunzzyQueries ******
+*** 31082023 ***
+
+
+REPORT fuzzyQueries.
+TABLES: MARA.
+DATA: GV_FLG TYPE C.
+SELECT-OPTIIONS S_MATNR FOR MARA-MATNR.
+
+START-OF-SELECTION.
+"模糊查询支持
+CLEAR gv_flg.
+LOOP AT S_MATNR.
+    IF S_MATNR-LOW CS '*'.
+        GV_FLG = 'X'.
+        EXIT.
+    ENDIF.
+    IF S_MATNR-HIGH CS '*'.
+        GV_FLG = 'X'.
+        EXIT.
+    ENDIF.
+ENDLOOP.
+
+"模糊查询
+IF GV_FLG = 'X'.
+    Call FUNCTION 'MGV_SELOP_AFTER_START_OF_SEL'
+    EXPORTING
+    SELOPT_NAME = 'MATNR'
+    TABLES
+    RANGE = S_MATNR[].
+ENDIF.
+
+SELECT *
+FROM MARA
+INTO TABLE GT_MARA
+WHERE MATNR IN S_MATNR.
+
+LOOP AT GT_MARA.
+    WRITE:/ GT_MARA-MATNR.
+ENDLOOP.

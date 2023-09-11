@@ -1,0 +1,12 @@
+"editor.tokenColorCustomizations": {
+    "[Default Dark+]": {
+        "textMateRules": [
+            {
+                "scope": "keyword.operator.abap",
+                "settings": {
+                    "foreground": "#d456b9"
+                }
+            }
+        ]
+    }
+}
