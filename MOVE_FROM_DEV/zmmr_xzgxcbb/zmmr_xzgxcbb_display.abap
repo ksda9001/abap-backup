@@ -1,0 +1,98 @@
+FORM FRM_DISPLAY_DATA.
+    LS_LAYOUT-ZEBRA = 'X'.
+    LS_LAYOUT-DETAIL_POPUP = 'X'.
+    LS_LAYOUT-DETAIL_TITLEBAR = '详细信息'.
+    LS_LAYOUT-F2CODE = '&ETA'.
+    LS_LAYOUT-COLWIDTH_OPTIMIZE = 'X'.
+
+    PERFORM CREATE_FIELD TABLES LT_FIELDCAT
+    USING:
+    'MATNR' '物料编码' '40',
+    'MAKTX' '物料名称' '40',
+    'ZSPECNAME' '型号规格' '127',
+    'ZZGF' '总规范' '50',
+    'ZMANUFACTURER' '生产厂家' '40',
+    'CHARG' '批次' '50',
+    'LGORT' '库存地点' '4',
+    'ZHWDZ' '货位地点' '20',
+    'MEINS' '计量单位' '3',
+    'ZHGZH' '合格证号' '',
+    'ZSQBM' '领用部门' '10',
+    'LIFNR' '供应商' '10',
+    'NAME1' '供应商名称' '35',
+    'EKGRP' '采购员' '3',
+    'MENGE' '当前库存数量' '17',
+    'DMBTR' '当前库存金额' '16',
+    'CPUDT_MKPF' '出库金额' '10',
+    'MRFMG' '出库数量' '17',
+    'ZCKJE' '出库金额' '16',
+    'LGORT1' '采购区域' '4'.
+
+CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+EXPORTING
+I_CALLBACK_PROGRAM = SY-REPID
+IT_FIELDCAT = LT_FIELDCAT[]
+IS_LAYOUT = LS_LAYOUT
+TABLES
+T_OUTTAB = FRM_GET_DATA
+EXCEPTIONS
+PROGRAM_ERROR = 1
+OTHERS = 2.
+
+ENDFORM.
+
+FORM FRM_INIT_DATA2.
+    LS_LAYOUT-ZEBRA = 'X'.
+    LS_LAYOUT-DETAIL_POPUP = 'X'.
+    LS_LAYOUT-DETAIL_TITLEBAR = '详细信息'.
+    LS_LAYOUT-F2CODE = '&ETA'.
+    LS_LAYOUT-COLWIDTH_OPTIMIZE = 'X'.
+
+    PERFORM CREATE_FIELD TABLES LT_FIELDCAT
+    USING:
+    'MATNR' '物料编码' '40',
+    'MAKTX' '物料名称' '40',
+    'ZSPECNAME' '型号规格' '127',
+    'ZZGF' '总规范' '50',
+    'ZMANUFACTURER' '生产厂家' '40',
+    'CHARG' '批次' '50',
+    'LGORT' '库存地点' '4',
+    'ZHWDZ' '货位地点' '20',
+    'MEINS' '计量单位' '3',
+    'ZHGZH' '合格证号' '',
+    'ZSQBM' '领用部门' '10',
+    'LIFNR' '供应商' '10',
+    'NAME1' '供应商名称' '35',
+    'EKGRP' '采购员' '3',
+    'MENGE' '当前库存数量' '17',
+    'DMBTR' '当前库存金额' '16',
+    'CPUDT_MKPF' '出库金额' '10',
+    'ZRKSL' '入库数量' '17',
+    'ZRKJE' '入库金额' '16',
+    'LGORT1' '采购区域' '4'.
+
+CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+EXPORTING
+I_CALLBACK_PROGRAM = SY-REPID
+IT_FIELDCAT = LT_FIELDCAT[]
+IS_LAYOUT = LS_LAYOUT
+TABLES
+T_OUTTAB = FRM_GET_DATA
+EXCEPTIONS
+PROGRAM_ERROR = 1
+OTHERS = 2.
+
+ENDFORM.
+
+FORM CREATE_FIELD TABLES T_FCAT TYPE SLIS_T_FIELDCAT_ALV
+USING
+U_FIELDNAME
+U_SELTEXT_L
+U_OUTPUTLEN.
+
+WT_FIELDCAT-FIELDNAME = U_FIELDNAME.
+WT_FIELDCAT-SELTEXT_L = U_SELTEXT_L.
+WT_FIELDCAT-U_OUTPUTLEN = U_OUTPUTLEN.
+APPEND WT_FIELDCAT TO LT_FIELDCAT.
+CLEAR WT_FIELDCAT.
+ENDFORM.
