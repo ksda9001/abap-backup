@@ -171,6 +171,8 @@ FORM USER_COMMAND_ALV USING R_UCOMM LIKE SY-UCOMM
             IF LT_FIELDCAT-FIELDNAME = 'CHAZHI'.
                 LT_FIELDCAT-SELTEXT_L = '当季折旧金额-原始数据当季折旧金额'.
             ENDIF.
+
+            "以上应使用case代替
         ENDLOOP.
 
         CLEAR ITAB1[].
