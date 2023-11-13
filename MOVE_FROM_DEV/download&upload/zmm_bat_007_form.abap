@@ -15,9 +15,28 @@ IF GT_ALV_DATA IS NOT INITIAL.
 
             PERFORM BAPI.
             IF SY-SUBRC = 0.
-                
+                <fs_data>-sign = 'X'.
+
+                l_perc = l_line * 100 / L_TOTAL.
+
+                concatenate '已导入：第' L_LINE '条，共' L_TOTAL '条' INTO L_STXT.
+                CALL FUNCTION 'SAPGUI_PROGRESS_INDICATOR'
+                EXPORTING
+                PERCENTAGE = L_PERC
+                TEXT = L_STXT.
             ENDIF.
+
+        ELSE.
+            MESSAGE '请至少选中一条数据' TYPE 'E'.
         ENDIF.
     ENDLOOP.
 ENDIF.
+ENDFORM.
+
+FORM BAPI.
+    xxxxxxxx
+    xxxxxxxx
+    xxxxxxxx
+    xxxxxxxx
+    
 ENDFORM.
