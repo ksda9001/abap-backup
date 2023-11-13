@@ -1,0 +1,23 @@
+FORM DATA_PROCESS.
+IF GT_ALV_DATA IS NOT INITIAL.
+    "进度条
+    DATA: L_PERC TYPE I VALUE 0.
+    DATA: L_LINE TYPE STRING,
+    L_TOTAL TYPE STRING.
+    DATA: L_STXT TYPE STRING.
+    DATA: L_SPERC(3) TYPE C.
+
+    DESCRIBE TABLE GT_ALV_DATA LINES L_TOTAL.
+    LOOP AT GT_ALV_DATA ASSIGNING <FS_DATA>.
+        "传输选中数据
+        IF <FS_DATA>-CHECK = 'X'.
+            ADD 1 TO L_LINE.
+
+            PERFORM BAPI.
+            IF SY-SUBRC = 0.
+                
+            ENDIF.
+        ENDIF.
+    ENDLOOP.
+ENDIF.
+ENDFORM.
