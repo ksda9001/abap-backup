@@ -1,0 +1,7 @@
+"例
+cl_md_bp_maintain=>validate_single(
+exporting
+i_data = ls_data
+importing
+et_return_map = lt
+).
