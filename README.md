@@ -1,2 +1,1 @@
-# *TOP SECRET*
-## DO NOT SET THIS GIT OUT OFF PRIVATE!!!
+# *You just DO WHAT THE FUCK YOU WANT TO, Or I will fuck you!!!*
