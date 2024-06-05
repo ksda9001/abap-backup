@@ -124,7 +124,7 @@ destination = lv_destination
 importing
 rc = lv_rc.
 IF lv_rc NE 0.
-    concatenate '模板文件：''下载失败'
+    concatenate '模板文件：' lv_objid '下载失败'
     into LV_ERRTXT.
 ENDIF.
 ENDFORM.
