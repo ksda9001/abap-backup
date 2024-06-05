@@ -110,7 +110,7 @@ IF lv_result EQ 'X'.
 
     IF lv_subrc <> 0.
         concatenate '同名EXCEL文件已打开' '请关闭EXCEL后重试'
-        into lv_errtxt
+        into lv_errtxt.
         MESSAGE e000(su) with lv_errtxt.
     ENDIF.
 ENDIF.
