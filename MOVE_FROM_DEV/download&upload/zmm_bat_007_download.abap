@@ -13,7 +13,7 @@ concatenate text-003 '_' SY-DATUM '.xlsx' into lv_init_fname.
 
 "获取桌面路径
 CALL METHOD cl_gui_frontend_services=>get_desktop_directory
-CHANGING
+CHANGINGb
 desktop_directory = lv_init_path "写入桌面路径
 EXCEPTIONS
 cntl_error = 1
@@ -43,6 +43,7 @@ IF sy-SUBRC = 0.
     pv_fullpath = lv_fullpath.
     pv_path = lv_path.
 ENDIF.
+ENDFORM.
 
 FORM frm_down USING pr_filename.
 DATA: lv_objdata like wwwdatatab,
