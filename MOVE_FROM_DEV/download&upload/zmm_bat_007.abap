@@ -3,6 +3,7 @@ REPORT zmm_bat_007.
 include zmm_bat_007_top.
 include zmm_bat_007_screen.
 include zmm_bat_007_upload.
+include zmm_bat_007_download.
 include zmm_bat_007_form.
 include zmm_bat_007_display.
 
