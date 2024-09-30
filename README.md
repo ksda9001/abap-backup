@@ -1,1 +1,1 @@
-# *You just DO WHAT THE FUCK YOU WANT TO, Or I will fuck you!!!*
+# *You just DO WHAT YOU WANT TO !!!*
